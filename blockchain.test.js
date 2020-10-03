@@ -1,5 +1,6 @@
 const Blockchain = require('./blockchain')
 const Block = require('./block')
+const cryptoHash = require('./crypto-hash')
 
 describe('Blockchain', () => {
   let blockchain, newChain, originalChain;
@@ -47,20 +48,48 @@ describe('Blockchain', () => {
           expect(Blockchain.isValidChain(blockchain.chain)).toBe(false)
 
         })
+      })
 
-        describe('and the chain contains a block with an invalid field', () => {
-          it('returns false', () => {
-            blockchain.chain[2].data = 'evil-data'
-            expect(Blockchain.isValidChain(blockchain.chain)).toBe(false)
-          })
-        })
-
-        describe('and the chain does not contain any invalid block', () => {
-          it('returns true', () => {
-            expect(Blockchain.isValidChain(blockchain.chain)).toBe(true)
-          })
+      describe('and the chain contains a block with an invalid field', () => {
+        it('returns false', () => {
+          blockchain.chain[2].data = 'evil-data'
+          expect(Blockchain.isValidChain(blockchain.chain)).toBe(false)
         })
       })
+
+      describe('and the chain contains a block with a jumped difficulty', () => {
+        it('returns false', () => {
+          const lastBlock = blockchain.chain[blockchain.chain.length - 1]
+
+          const lastHash = lastBlock.hash
+          const timestamp = Date.now()
+          const nonce = 0
+          const data = []
+          const difficulty = lastBlock.difficulty - 3
+
+          const hash = cryptoHash(timestamp, lastHash, difficulty, nonce, data)
+
+          const badblock = new Block({
+            timestamp,
+            lastHash,
+            hash,
+            nonce,
+            difficulty,
+            data
+          })
+
+          blockchain.chain.push(badblock)
+
+          expect(Blockchain.isValidChain(blockchain.chain)).toBe(false)
+        })
+      })
+
+      describe('and the chain does not contain any invalid block', () => {
+        it('returns true', () => {
+          expect(Blockchain.isValidChain(blockchain.chain)).toBe(true)
+        })
+      })
+
     })
   })
 
@@ -108,10 +137,14 @@ describe('Blockchain', () => {
         it('does not replace the chain', () => {
           expect(blockchain.chain).toEqual(originalChain)
         })
+
+        it('logs and error', () => {
+          expect(errorMock).toHaveBeenCalled()
+        })
       })
 
       describe('and the chain is valid', () => {
-        beforeEach(()=>{
+        beforeEach(() => {
           blockchain.replaceChain(newChain.chain)
         })
 
@@ -120,7 +153,7 @@ describe('Blockchain', () => {
           expect(blockchain.chain).toEqual(newChain.chain)
         })
 
-        it('logs about the chain replacement', ()=>{
+        it('logs about the chain replacement', () => {
           expect(logMock).toHaveBeenCalled()
         })
       })
