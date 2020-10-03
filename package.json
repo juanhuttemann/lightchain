@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "hex-to-binary": "^1.0.1",
     "jest": "^23.6.0"
   }
 }
