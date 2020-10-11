@@ -1,55 +1,62 @@
-const Block = require('./block')
-const cryptoHash = require('../util/crypto-hash')
+const Block = require("./block");
+const { cryptoHash } = require("../util");
 
 class Blockchain {
   constructor() {
-    this.chain = [Block.genesis()]
-  };
+    this.chain = [Block.genesis()];
+  }
 
   addBlock({ data }) {
     const newBlock = Block.mineBlock({
       lastBlock: this.chain[this.chain.length - 1],
-      data
-    })
+      data,
+    });
 
-    this.chain.push(newBlock)
+    this.chain.push(newBlock);
   }
 
   replaceChain(chain) {
     if (chain.length <= this.chain.length) {
-      console.error('The incoming chain must be longer')
-      return
+      console.error("The incoming chain must be longer");
+      return;
     }
 
     if (!Blockchain.isValidChain(chain)) {
-      console.error('The incoming chain must be valid')
-      return
+      console.error("The incoming chain must be valid");
+      return;
     }
 
-    console.log('replacing chain with', chain)
-    this.chain = chain
+    console.log("replacing chain with", chain);
+    this.chain = chain;
   }
 
   static isValidChain(chain) {
-    if (JSON.stringify(chain[0]) !== JSON.stringify(Block.genesis())) return false
+    if (JSON.stringify(chain[0]) !== JSON.stringify(Block.genesis()))
+      return false;
 
     for (let i = 1; i < chain.length; i++) {
-      const { timestamp, lastHash, hash, nonce, difficulty, data } = chain[i]
+      const { timestamp, lastHash, hash, nonce, difficulty, data } = chain[i];
 
-      const actualLastHash = chain[i - 1].hash
+      const actualLastHash = chain[i - 1].hash;
 
-      const lastDifficulty = chain[i - 1].difficulty
+      const lastDifficulty = chain[i - 1].difficulty;
 
-      if (lastHash !== actualLastHash) return false
+      if (lastHash !== actualLastHash) return false;
 
-      const validatedHash = cryptoHash(timestamp, lastHash, nonce, difficulty, data)
+      const validatedHash = cryptoHash(
+        timestamp,
+        lastHash,
+        nonce,
+        difficulty,
+        data
+      );
 
-      if (hash !== validatedHash) return false
+      if (hash !== validatedHash) return false;
 
-      if (Math.abs(lastDifficulty - difficulty) > 1) return false
+      if (Math.abs(lastDifficulty - difficulty) > 1) return false;
     }
 
-    return true
+    return true;
   }
 }
 
